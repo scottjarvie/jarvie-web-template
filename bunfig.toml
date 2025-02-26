@@ -1,0 +1,11 @@
+[test]
+coverage = true
+
+[install]
+registry = "https://registry.npmjs.org/"
+peer = true
+
+[install.cache]
+dir = ".bun/install/cache"
+
+[debug] 

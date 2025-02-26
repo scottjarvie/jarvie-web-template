@@ -1,0 +1,48 @@
+# Render Blueprint configuration for full-stack deployment
+services:
+  # Backend API service configuration
+  - type: web
+    name: bstack-api
+    runtime: node
+    plan: free  # Change to appropriate plan for production
+    buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile
+    startCommand: cd apps/api && bun run src/index.ts
+    envVars:
+      - key: BUN_VERSION
+        value: "1.2.3"
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: "3004"
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SIGNING_SECRET
+        sync: false
+      # Add any other required environment variables here
+    region: oregon
+    healthCheckPath: /health
+    rootDir: .
+    
+  # Frontend service configuration
+  - type: web
+    name: bstack-web
+    runtime: node
+    plan: free  # Change to appropriate plan for production
+    buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile && cd apps/web && pnpm build
+    startCommand: cd apps/web && pnpm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://bstack-api.onrender.com"  # Link to your backend
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      # Add any other required environment variables here
+    region: oregon
+    rootDir: .
+
+version: "1"
