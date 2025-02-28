@@ -10,6 +10,9 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 
+// Import shared logger from packages
+import { createRequestLogger, logger as appLogger } from "@repo/logs";
+
 // Import route modules
 import { postRoutes } from "@/modules/posts";
 import { errorHandler } from "@/pkg/middleware/error";
@@ -27,7 +30,8 @@ const isDev = NODE_ENV === "development";
 const app = new Hono();
 
 // Global middleware
-app.use("*", logger());
+app.use("*", createRequestLogger()); // Enhanced request logger with request IDs
+app.use("*", logger()); // Hono's basic logger for backward compatibility
 if (isDev) {
   app.use("*", prettyJSON());
 }
@@ -71,7 +75,18 @@ app.notFound((c) => {
 
 // Global error handler
 app.onError((err, c) => {
-  console.error(`${c.req.method} ${c.req.url}`, err);
+  // Use structured logger for errors
+  appLogger.error({
+    msg: "Unhandled error",
+    method: c.req.method,
+    url: c.req.url,
+    error: err instanceof Error ? {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    } : String(err)
+  });
+  
   return c.json({ error: err.message, status: 500 }, 500);
 });
 
