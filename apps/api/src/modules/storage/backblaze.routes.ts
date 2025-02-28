@@ -10,7 +10,6 @@ import { z } from "zod";
 import { auth, getUserId, requireAuth } from "@/pkg/middleware/clerk-auth";
 import { backblazeStorageService } from "@/pkg/services/backblaze-storage";
 import { logger } from "@repo/logs";
-import fetch from "node-fetch";
 
 // Create a new Hono router for Backblaze B2 storage routes
 const backblazeRoutes = new Hono()

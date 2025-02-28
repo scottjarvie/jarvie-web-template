@@ -339,10 +339,10 @@ I have already done much of the work on another project and can share what worke
   - [x] shadcn/ui integration
   - [x] Example responsive components
   - [x] Tailwind usage documentation
-- [ x] Add Render deployment configuration (frontend & backend)
+- [x] Add Render deployment configuration (frontend & backend)
 - [x] Integrate OpenAI package (GPT-4o and 4o-mini support)
 - [x] Add Tiktoken integration
-- [ ] Set up Backblaze storage
+- [x] Set up Backblaze storage
 - [ ] Update documentation with comprehensive setup instructions
 
 ## Project Overview

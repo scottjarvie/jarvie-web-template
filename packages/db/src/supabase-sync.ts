@@ -37,8 +37,6 @@ export async function syncSupabaseUser(supabaseUser: SupabaseUser) {
       await db.insert(users).values({
         ...userData,
         userId: supabaseUser.id, // Using Supabase id as userId for simplicity
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
       
       console.log(`Created new user: ${supabaseUser.id}`);
@@ -49,7 +47,6 @@ export async function syncSupabaseUser(supabaseUser: SupabaseUser) {
         .update(users)
         .set({
           ...userData,
-          updatedAt: new Date()
         })
         .where(eq(users.supabaseId, supabaseUser.id));
       

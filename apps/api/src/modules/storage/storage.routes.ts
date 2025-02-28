@@ -31,7 +31,7 @@ const supabaseRoutes = new Hono()
       const { signedUrl, key } = await supabaseStorageService.getSignedUploadUrl(
         fileName,
         contentType,
-        userId
+        userId || undefined
       );
       
       return c.json({ signedUrl, key });

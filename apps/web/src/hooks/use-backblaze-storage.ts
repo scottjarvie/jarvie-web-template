@@ -22,6 +22,67 @@ interface UseBackblazeStorageReturn {
   listFiles: (prefix?: string) => Promise<any[]>;
 }
 
+// API helper functions
+async function getPresignedUrl(fileName: string, contentType: string) {
+  const client = await getApiClient();
+  const response = await client.storage.backblaze["presigned-upload"].$post({
+    json: {
+      fileName,
+      contentType,
+    },
+  });
+  return response.json();
+}
+
+async function proxyUpload(presignedUrl: string, key: string, contentType: string, fileData: string) {
+  const client = await getApiClient();
+  // Use fetch directly instead of the client since proxy-upload may not be typed correctly
+  const response = await fetch(`/api/storage/backblaze/proxy-upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      presignedUrl,
+      key,
+      contentType,
+      fileData,
+    }),
+  });
+  return response.json();
+}
+
+async function getPublicUrl(key: string) {
+  const client = await getApiClient();
+  // Use fetch directly instead of the client
+  const response = await fetch(`/api/storage/backblaze/public-url/${key}`);
+  return response.json();
+}
+
+async function deleteBackblazeFile(key: string) {
+  const client = await getApiClient();
+  const response = await client.storage.backblaze[':key'].$delete({
+    param: { key }
+  });
+  return response.json();
+}
+
+async function checkFileExists(key: string) {
+  const client = await getApiClient();
+  const response = await client.storage.backblaze.exists[':key'].$get({
+    param: { key }
+  });
+  return response.json();
+}
+
+async function listBackblazeFiles(prefix?: string) {
+  const client = await getApiClient();
+  const response = await client.storage.backblaze.list[':prefix?'].$get({
+    param: { prefix }
+  });
+  return response.json();
+}
+
 /**
  * Hook for interacting with Backblaze B2 storage
  */
@@ -63,36 +124,31 @@ export function useBackblazeStorage(): UseBackblazeStorageReturn {
       setUploading(true);
       
       // Step 1: Get a presigned URL from our API
-      const client = await getApiClient();
-      const presignedResponse = await client.storage.backblaze["presigned-upload"].$post({
-        json: {
-          fileName: file.name,
-          contentType: file.type,
-        },
-      });
-
-      const { presignedUrl, key } = await presignedResponse.json();
+      const presignedData = await getPresignedUrl(file.name, file.type);
+      
+      // Check if there's an error in the response
+      if ('error' in presignedData) {
+        throw new Error(presignedData.error);
+      }
+      
+      const { presignedUrl, key } = presignedData;
 
       // Step 2: Upload the file through our proxy to avoid CORS issues
-      const uploadResponse = await client.storage.backblaze["proxy-upload"].$post({
-        json: {
-          presignedUrl,
-          key,
-          contentType: file.type,
-          // Convert file to base64 for transmission
-          fileData: await fileToBase64(file)
-        },
-      });
-
-      const uploadResult = await uploadResponse.json();
+      const fileData = await fileToBase64(file);
+      const uploadResult = await proxyUpload(presignedUrl, key, file.type, fileData);
       
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || "Upload failed");
+      if ('error' in uploadResult || !uploadResult.success) {
+        throw new Error('error' in uploadResult ? uploadResult.error : "Upload failed");
       }
 
       // Step 3: Get the public URL
-      const urlResponse = await client.storage.backblaze["public-url"][key].$get();
-      const { publicUrl } = await urlResponse.json();
+      const urlData = await getPublicUrl(key);
+      
+      if ('error' in urlData) {
+        throw new Error(urlData.error);
+      }
+      
+      const { publicUrl } = urlData;
 
       options?.onSuccess?.(publicUrl, key);
       return { url: publicUrl, key };
@@ -110,10 +166,13 @@ export function useBackblazeStorage(): UseBackblazeStorageReturn {
    */
   const deleteFile = async (key: string): Promise<boolean> => {
     try {
-      const client = await getApiClient();
-      const response = await client.storage.backblaze[key].$delete();
-      const { success } = await response.json();
-      return success;
+      const result = await deleteBackblazeFile(key);
+      
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      
+      return result.success;
     } catch (error) {
       console.error("Error deleting file:", error);
       return false;
@@ -125,10 +184,13 @@ export function useBackblazeStorage(): UseBackblazeStorageReturn {
    */
   const fileExists = async (key: string): Promise<boolean> => {
     try {
-      const client = await getApiClient();
-      const response = await client.storage.backblaze.exists[key].$get();
-      const { exists } = await response.json();
-      return exists;
+      const result = await checkFileExists(key);
+      
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      
+      return result.exists;
     } catch (error) {
       console.error("Error checking if file exists:", error);
       return false;
@@ -140,17 +202,13 @@ export function useBackblazeStorage(): UseBackblazeStorageReturn {
    */
   const listFiles = async (prefix?: string): Promise<any[]> => {
     try {
-      const client = await getApiClient();
-      let response;
+      const result = await listBackblazeFiles(prefix);
       
-      if (prefix) {
-        response = await client.storage.backblaze.list[prefix].$get();
-      } else {
-        response = await client.storage.backblaze.list.$get();
+      if ('error' in result) {
+        throw new Error(result.error);
       }
       
-      const { files } = await response.json();
-      return files;
+      return result.files;
     } catch (error) {
       console.error("Error listing files:", error);
       return [];
