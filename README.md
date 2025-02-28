@@ -1,7 +1,7 @@
-# B(build)stack
+# Jarvie Web Template
 
 A modern full-stack application template built with Turborepo, featuring a Hono + Bun API backend and Next.js frontend.
-Easiest way to build a SaaS.
+The fastest way to start a production-ready SaaS application with built-in support for authentication, storage, database, and AI capabilities.
 
 ### API (Backend)
 
@@ -327,6 +327,34 @@ the goal is to create a super template to start projects using tools i almost al
 Below is a list of tasks we need to do in order to prepare this template to be coordinated.
 I have already done much of the work on another project and can share what worked from there in order to update our template repository here.
 
+## Getting Started Quickly
+
+1. Clone this template
+   ```bash
+   git clone https://github.com/yourusername/jarvie-web-template.git my-new-project
+   cd my-new-project
+   ```
+
+2. Install dependencies
+   ```bash
+   pnpm install
+   ```
+
+3. Copy `.env.example` to `.env` in the root directory, then to each app and package requiring it
+   ```bash
+   cp .env.example .env
+   cp .env.example apps/api/.env
+   cp .env.example apps/web/.env
+   cp .env.example packages/db/.env
+   ```
+
+4. Update each `.env` file with your specific credentials
+
+5. Start development
+   ```bash
+   pnpm dev
+   ```
+
 ## To-Do List
 
 - [x] Double-check existing Supabase integration
@@ -343,7 +371,11 @@ I have already done much of the work on another project and can share what worke
 - [x] Integrate OpenAI package (GPT-4o and 4o-mini support)
 - [x] Add Tiktoken integration
 - [x] Set up Backblaze storage
-- [ ] Update documentation with comprehensive setup instructions
+- [x] Update documentation with comprehensive setup instructions
+- [ ] Add standardized API documentation
+- [ ] Complete CRUD example in frontend
+- [ ] Add automated tests
+- [ ] Create setup scripts for new projects
 
 ## Project Overview
 

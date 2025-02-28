@@ -1,8 +1,16 @@
+/**
+ * API Server Entry Point
+ * 
+ * This file serves as the main entry point for the Hono API server.
+ * It configures middleware, routes, and server settings for the application.
+ */
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 
+// Import route modules
 import { postRoutes } from "@/modules/posts";
 import { errorHandler } from "@/pkg/middleware/error";
 import { webhookRoutes } from "@/modules/webhooks/webhook.routes";
@@ -70,7 +78,14 @@ app.onError((err, c) => {
 // Export type for client
 export type AppType = typeof routes;
 
-// Configure Bun server
+/**
+ * Configure Bun server with optimized settings
+ * 
+ * These settings are tuned for production performance:
+ * - Increased request body size limit for file uploads
+ * - Optimized idle timeout for connection management
+ * - Development mode detection for debugging
+ */
 export default {
   port: PORT,
   fetch: app.fetch,
@@ -78,4 +93,9 @@ export default {
   // Performance tuning for Bun
   maxRequestBodySize: 10 * 1024 * 1024, // 10MB
   idleTimeout: 30,
+  // Enable TLS in production if certificates are available
+  tls: process.env.API_PRODUCTION === "true" ? {
+    key: Bun.file("./certs/key.pem"),
+    cert: Bun.file("./certs/cert.pem"),
+  } : undefined,
 };
